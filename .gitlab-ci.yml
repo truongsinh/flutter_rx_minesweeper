@@ -19,3 +19,16 @@ test:
     when: always
     paths:
     - ./reports
+
+pages:
+  stage: build
+  before_script:
+    - flutter config --enable-web
+  script:
+  - flutter build web
+  - mv build/web public
+  artifacts:
+    paths:
+    - public
+  only:
+    - master
