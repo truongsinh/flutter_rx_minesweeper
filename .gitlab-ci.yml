@@ -1,0 +1,21 @@
+image: cirrusci/flutter:stable-web
+
+stages:
+  - test
+  - build
+
+test:
+  stage: test
+  before_script:
+    - flutter analyze
+    - flutter format -n --set-exit-if-changed .
+  script:
+  - flutter test --coverage
+  coverage: '/lines\.*: (\d+\.\d+%)/'
+  after_script:
+  - genhtml coverage/lcov.info --function-coverage --branch-coverage --output-directory reports
+  artifacts:
+    name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME"
+    when: always
+    paths:
+    - ./reports
