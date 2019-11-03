@@ -5,6 +5,7 @@ import 'package:rx_minesweeper/bloc_minecell.dart';
 
 import 'package:rx_minesweeper/bloc_minefield.dart'
     show MineField, shouldThisCellRandomlyIsBomb;
+import 'package:rx_minesweeper/interface_minecell.dart';
 
 void main() {
   Random random;
