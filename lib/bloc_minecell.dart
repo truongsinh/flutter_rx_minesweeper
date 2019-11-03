@@ -124,7 +124,7 @@ class BlocMineCell implements IBlocMineCell {
     isBombSubject.close();
     neighborSubject.close();
     interactSubject.close();
-    cellPresentationBahaviour.close();
     resetPresentation.close();
+    // `cellPresentationBahaviour` is piped, thus should not be closed
   }
 }

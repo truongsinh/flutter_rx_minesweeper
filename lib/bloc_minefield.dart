@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import 'package:rxdart/subjects.dart';
+
 import 'bloc_minecell.dart';
 
 // @todo not guaranteed to be cryptographically secured
@@ -26,11 +28,11 @@ class MineField {
   final Random randomGen;
   final List<List<IBlocMineCell>> fieldRows;
   MineField(this.dimension, totalBomb, {int randomSeed})
-      : randomGen = randomSeed != null ? Random(randomSeed) : Random(),
+      : randomGen = Random(randomSeed),
         fieldRows = List<List<IBlocMineCell>>(dimension.y) {
-    // @todo hardcode game param for now
-    assert(dimension == Point(10, 8));
-    assert(totalBomb == 10);
+    assert(dimension.y > 0);
+    assert(dimension.x > 0);
+    assert(totalBomb >= 0);
 
     int remainingCell = dimension.x * dimension.y;
     int remaininBomb = totalBomb;
@@ -55,6 +57,7 @@ class MineField {
 
   void reset(int totalBomb) {
     int remainingCell = dimension.x * dimension.y;
+    /*
     int remaininBomb = totalBomb;
     for (var thisRow = 0; thisRow < dimension.y; thisRow++) {
       for (var thisColumn = 0; thisColumn < dimension.x; thisColumn++) {
@@ -70,6 +73,7 @@ class MineField {
         remainingCell--;
       }
     }
+    */
   }
 
   void _connectThisCellToItsNeighbor(thisRow, thisColumn, mineCell) {
@@ -89,7 +93,7 @@ class MineField {
         itsTopCenter.neighbor.add(mineCell);
         mineCell.neighbor.add(itsTopCenter);
       }
-      if (thisColumn < dimension.y) {
+      if (thisColumn < dimension.x - 1) {
         final itsTopRight = fieldRows[thisRow - 1][thisColumn + 1];
         itsTopRight.neighbor.add(mineCell);
         mineCell.neighbor.add(itsTopRight);
@@ -112,53 +116,62 @@ enum GameState {
   gameover,
 }
 
-// abstract class IBlocMineField {
-//   Sink<MineField> get resetNewGame;
-//   Sink<Point<int>> get flagCell;
-//   Sink<Point<int>> get openCell;
+abstract class IBlocMineField {
+  Sink<void> get resetNewGame;
+  Sink<Point<int>> get flagCell;
+  Sink<Point<int>> get openCell;
 
-//   Stream<GameState> get gameState;
-//   Stream<List<List<Stream<IBlocMineCell>>>> field;
+  Stream<GameState> get gameState;
+  Stream<MineField> get field;
 
-//   void dispose();
-// }
+  void dispose();
+}
 
-// class BlocMineField implements IBlocMineField {
-//   final resetNewGameSubject =
-//       BehaviorSubject.seeded(MineField(Point(10, 8), 10));
-//   final gameStateSubject = BehaviorSubject.seeded(GameState.intro);
+class BlocMineField implements IBlocMineField {
+  final BehaviorSubject<void> resetNewGame = BehaviorSubject<void>.seeded(null);
+  final BehaviorSubject<GameState> gameState =
+      BehaviorSubject.seeded(GameState.intro);
+  final BehaviorSubject<Point<int>> flagCell = BehaviorSubject<Point<int>>();
+  final BehaviorSubject<Point<int>> openCell = BehaviorSubject<Point<int>>();
 
-//   BlocMineField() {
-//     resetNewGameSubject.map((_) => GameState.ongoing).pipe(gameStateSubject.sink);
-//     resetNewGameSubject.map((minefieldSetting) {
-//       // @todo dispose previous field
-//       List<List<IBlocMineCell>> field;
+  final BehaviorSubject<MineField> field;
 
-//     })
-//   }
+  BlocMineField([randomSeed])
+      : field = BehaviorSubject<MineField>.seeded(
+            MineField(Point(10, 8), 10, randomSeed: randomSeed)) {
+    resetNewGame.map((_) => GameState.intro).pipe(gameState.sink);
+    resetNewGame.withLatestFrom<MineField, MineField>(field, (_, mineField) {
+      mineField.dispose();
+      return MineField(Point(15, 15), 10);
+      /*
+      // @todo not yet FRP
+      mineField.reset(10);
+      return mineField;
+      */
+    }).pipe(field);
 
-//   @override
-//   List<List<Stream<IBlocMineCell>>> field;
+    flagCell
+        .withLatestFrom<MineField, IBlocMineCell>(
+            field,
+            (pointToFlag, field) =>
+                field.fieldRows[pointToFlag.y][pointToFlag.x])
+        // @todo not yet FRP
+        .listen((cell) => cell.interact.add(MineCellInteraction.nextFlag));
 
-//   @override
-//   // TODO: implement flagCell
-//   Sink<Point<int>> get flagCell => null;
+    openCell
+        .withLatestFrom<MineField, IBlocMineCell>(
+            field,
+            (pointToFlag, field) =>
+                field.fieldRows[pointToFlag.y][pointToFlag.x])
+        // @todo not yet FRP
+        .listen((cell) => cell.interact.add(MineCellInteraction.reveal));
+  }
 
-//   @override
-//   // TODO: implement gameState
-//   Stream<GameState> get gameState => null;
-
-//   @override
-//   // TODO: implement openCell
-//   Sink<Point<int>> get openCell => null;
-
-//   @override
-//   // TODO: implement resetNewGame
-//   Sink<MineField> get resetNewGame => resetNewGameSubject.sink;
-
-//   @override
-//   void dispose() {
-//     resetNewGameSubject.close();
-//     gameStateSubject.close();
-//   }
-// }
+  @override
+  void dispose() {
+    resetNewGame.close();
+    gameState.close();
+    field.close();
+    flagCell.close();
+  }
+}
