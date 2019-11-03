@@ -3,6 +3,8 @@ import 'dart:math';
 import 'package:rxdart/subjects.dart';
 
 import 'bloc_minecell.dart';
+import 'interface_minecell.dart';
+import 'interface_minefield.dart';
 
 // @todo not guaranteed to be cryptographically secured
 // @todo any chance 2 remaining bomb, 1 remaining cell?
@@ -23,7 +25,7 @@ bool shouldThisCellRandomlyIsBomb(
   return randomValue < totalRemainingBomb / totalRemainingCellInclusive;
 }
 
-class MineField {
+class MineField implements IMineField {
   final Point<int> dimension;
   final Random randomGen;
   final List<List<IBlocMineCell>> fieldRows;
@@ -108,23 +110,20 @@ class MineField {
       }
     }
   }
-}
 
-enum GameState {
-  intro,
-  ongoing,
-  gameover,
-}
+  @override
+  IBlocMineCell cellAtLinearPosition(int position) {
+    // Get row and column number of square
+    final int rowNumber = (position / columnCount).floor();
+    final int columnNumber = (position % columnCount);
+    return fieldRows[rowNumber][columnNumber];
+  }
 
-abstract class IBlocMineField {
-  Sink<void> get resetNewGame;
-  Sink<Point<int>> get flagCell;
-  Sink<Point<int>> get openCell;
+  @override
+  int get cellCount => dimension.x * dimension.y;
 
-  Stream<GameState> get gameState;
-  Stream<MineField> get field;
-
-  void dispose();
+  @override
+  int get columnCount => dimension.x;
 }
 
 class BlocMineField implements IBlocMineField {
