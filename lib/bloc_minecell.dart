@@ -1,5 +1,4 @@
-import 'package:rxdart/rxdart.dart';
-import 'package:rxdart/subjects.dart' show BehaviorSubject;
+import 'package:rxdart/subjects.dart';
 
 import 'interface_minecell.dart';
 

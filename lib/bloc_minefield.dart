@@ -2,9 +2,10 @@ import 'dart:math';
 
 import 'package:rxdart/subjects.dart';
 
-import 'bloc_minecell.dart';
 import 'interface_minecell.dart';
 import 'interface_minefield.dart';
+
+import 'bloc_minecell.dart';
 
 // @todo not guaranteed to be cryptographically secured
 // @todo any chance 2 remaining bomb, 1 remaining cell?
@@ -43,6 +44,7 @@ class MineField implements IMineField {
       final fieldCellsInARow = List<IBlocMineCell>(dimension.x);
       fieldRows[thisRow] = fieldCellsInARow;
       for (var thisColumn = 0; thisColumn < dimension.x; thisColumn++) {
+        // @todo we can have even more decoupled
         final mineCell = BlocMineCell();
         if (shouldThisCellRandomlyIsBomb(
             remaininBomb, remainingCell, randomGen)) {
@@ -57,9 +59,9 @@ class MineField implements IMineField {
     }
   }
 
+  /*
   void reset(int totalBomb) {
     int remainingCell = dimension.x * dimension.y;
-    /*
     int remaininBomb = totalBomb;
     for (var thisRow = 0; thisRow < dimension.y; thisRow++) {
       for (var thisColumn = 0; thisColumn < dimension.x; thisColumn++) {
@@ -75,8 +77,8 @@ class MineField implements IMineField {
         remainingCell--;
       }
     }
-    */
   }
+  */
 
   void _connectThisCellToItsNeighbor(thisRow, thisColumn, mineCell) {
     if (thisColumn > 0) {
