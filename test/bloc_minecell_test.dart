@@ -2,8 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:rx_minesweeper/bloc_minecell.dart'
-    show BlocMineCell, IBlocMineCell, MineCellInteraction, MineCellPresentation;
+import 'package:rx_minesweeper/bloc_minecell.dart';
 import 'package:rx_minesweeper/interface_minecell.dart';
 
 void main() {

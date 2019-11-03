@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:rx_minesweeper/bloc_minefield.dart';
-import 'game_activity.dart';
+import 'widget_game_activity.dart';
 
 void main() => runApp(MyApp());
 
