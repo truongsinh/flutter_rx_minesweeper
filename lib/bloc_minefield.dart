@@ -23,24 +23,17 @@ bool shouldThisCellRandomlyIsBomb(
 
 class MineField {
   final Point<int> dimension;
-  final int totalBomb;
-  final int randomSeed;
-  Random randomGen;
-  List<List<IBlocMineCell>> fieldRows;
-  MineField(this.dimension, this.totalBomb, {this.randomSeed}) {
+  final Random randomGen;
+  final List<List<IBlocMineCell>> fieldRows;
+  MineField(this.dimension, totalBomb, {int randomSeed})
+      : randomGen = randomSeed != null ? Random(randomSeed) : Random(),
+        fieldRows = List<List<IBlocMineCell>>(dimension.y) {
     // @todo hardcode game param for now
     assert(dimension == Point(10, 8));
     assert(totalBomb == 10);
-    fieldRows = List<List<IBlocMineCell>>(dimension.y);
 
     int remainingCell = dimension.x * dimension.y;
     int remaininBomb = totalBomb;
-
-    if (this.randomSeed != null) {
-      randomGen = Random(this.randomSeed);
-    } else {
-      randomGen = Random();
-    }
 
     for (var thisRow = 0; thisRow < dimension.y; thisRow++) {
       final fieldCellsInARow = List<IBlocMineCell>(dimension.x);
@@ -56,6 +49,25 @@ class MineField {
         fieldCellsInARow[thisColumn] = mineCell;
 
         _connectThisCellToItsNeighbor(thisRow, thisColumn, mineCell);
+      }
+    }
+  }
+
+  void reset(int totalBomb) {
+    int remainingCell = dimension.x * dimension.y;
+    int remaininBomb = totalBomb;
+    for (var thisRow = 0; thisRow < dimension.y; thisRow++) {
+      for (var thisColumn = 0; thisColumn < dimension.x; thisColumn++) {
+        final mineCell = fieldRows[thisRow][thisColumn] as BlocMineCell;
+        mineCell.resetPresentation.add(MineCellPresentation.unrevealed);
+        if (shouldThisCellRandomlyIsBomb(
+            remaininBomb, remainingCell, randomGen)) {
+          mineCell.isBombSubject.add(true);
+          remaininBomb--;
+        } else {
+          mineCell.isBombSubject.add(false);
+        }
+        remainingCell--;
       }
     }
   }

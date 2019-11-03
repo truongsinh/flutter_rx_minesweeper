@@ -56,7 +56,6 @@ void main() {
     });
   });
 
-  // @todo field should show number of bombs in the neighbor
   group('MineField with seed 42', () {
     final numOfColumn = 10;
     final numOfRow = 8;
@@ -81,27 +80,74 @@ void main() {
       final fieldCellsInARow = fieldRows[0];
       expect(fieldCellsInARow, hasLength(10));
     });
-    List.generate(numOfRow, (thisRow) {
-      List.generate(numOfColumn, (thisColumn) {
-        final expectedFaceValue =
-            expectedRevealedMinedField[thisRow][thisColumn];
-        test(
-            'row $thisRow, column $thisColumn has faceValue $expectedFaceValue',
-            () {
-          final fieldRows = field.fieldRows;
-          fieldRows[thisRow][thisColumn].interact
-            ..add(MineCellInteraction.reveal)
-            ..close();
-          expect(
-            fieldRows[thisRow][thisColumn].cellPresentation,
-            emitsInOrder([
-              MineCellPresentation.unrevealed,
-              MineCellPresentation.values[expectedFaceValue],
-              emitsDone,
-            ]),
-          );
-        });
+    generateTest(numOfRow, numOfColumn, expectedRevealedMinedField, field);
+  });
+  group('MineField with seed 42, then reset to 78 bombs', () {
+    final numOfColumn = 10;
+    final numOfRow = 8;
+    final field = MineField(Point(numOfColumn, numOfRow), 10, randomSeed: 42);
+    field.reset(78);
+
+    // 9 is bomb
+    final expectedRevealedMinedField = [
+      /* column    0  1  2  3  4  5  6  7  8  9       */
+      /* row 0 */ [9, 9, 9, 9, 9, 9, 9, 9, 9, 9] /* 0 */,
+      /* row 1 */ [9, 9, 9, 9, 9, 9, 9, 9, 9, 9] /* 1 */,
+      /* row 2 */ [9, 9, 9, 9, 9, 9, 9, 9, 9, 9] /* 2 */,
+      /* row 3 */ [9, 9, 9, 9, 9, 9, 9, 9, 9, 9] /* 3 */,
+      /* row 4 */ [9, 9, 9, 9, 9, 9, 9, 9, 9, 9] /* 4 */,
+      /* row 5 */ [9, 9, 9, 8, 9, 9, 9, 9, 9, 9] /* 5 */,
+      /* row 6 */ [9, 9, 9, 9, 9, 9, 9, 9, 9, 9] /* 6 */,
+      /* row 7 */ [9, 5, 9, 9, 9, 9, 9, 9, 9, 9] /* 7 */,
+      /* column    0  1  2  3  4  5  6  7  8  9       */
+    ];
+    generateTest(numOfRow, numOfColumn, expectedRevealedMinedField, field);
+  });
+  group('MineField with seed 42, then reset to 2 bombs', () {
+    final numOfColumn = 10;
+    final numOfRow = 8;
+    final field = MineField(Point(numOfColumn, numOfRow), 10, randomSeed: 42);
+    field.reset(2);
+
+    // 9 is bomb
+    final expectedRevealedMinedField = [
+      /* column    0  1  2  3  4  5  6  7  8  9       */
+      /* row 0 */ [0, 0, 0, 0, 0, 0, 0, 0, 0, 0] /* 0 */,
+      /* row 1 */ [0, 0, 0, 0, 0, 0, 0, 0, 0, 0] /* 1 */,
+      /* row 2 */ [0, 0, 0, 0, 0, 0, 0, 0, 0, 0] /* 2 */,
+      /* row 3 */ [0, 0, 0, 0, 0, 0, 0, 0, 0, 0] /* 3 */,
+      /* row 4 */ [0, 0, 0, 0, 0, 0, 0, 0, 0, 0] /* 4 */,
+      /* row 5 */ [0, 0, 0, 0, 0, 0, 0, 0, 0, 0] /* 5 */,
+      /* row 6 */ [0, 0, 1, 1, 1, 0, 1, 1, 1, 0] /* 6 */,
+      /* row 7 */ [0, 0, 1, 9, 1, 0, 1, 9, 1, 0] /* 7 */,
+      /* column    0  1  2  3  4  5  6  7  8  9       */
+    ];
+    generateTest(numOfRow, numOfColumn, expectedRevealedMinedField, field);
+  });
+}
+
+generateTest(
+    numOfRow, numOfColumn, expectedRevealedMinedField, MineField field) {
+  List.generate(numOfRow, (thisRow) {
+    List.generate(numOfColumn, (thisColumn) {
+      final expectedFaceValue = expectedRevealedMinedField[thisRow][thisColumn];
+      test('row $thisRow, column $thisColumn has faceValue $expectedFaceValue',
+          () async {
+        final fieldCells = field.fieldRows[thisRow][thisColumn] as BlocMineCell;
+        expect(
+          fieldCells.cellPresentation,
+          emitsInOrder([
+            MineCellPresentation.unrevealed,
+            MineCellPresentation.values[expectedFaceValue],
+            emitsDone,
+          ]),
+        );
+        fieldCells.interact
+          ..add(MineCellInteraction.reveal)
+          ..close();
       });
     });
   });
 }
+
+// @todo new dimension, set bomb diff number
