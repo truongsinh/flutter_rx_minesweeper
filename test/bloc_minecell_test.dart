@@ -26,47 +26,46 @@ void main() {
       ]),
     );
   });
-  test('blockMineCell add static bomb neighbor', () async {
-    final neighborWithBomb = BlocMineCell()..isBombSubject.add(true);
-    final neighborWithoutBomb = BlocMineCell()..isBombSubject.add(false);
-    blocMineCell.neighbor.add(neighborWithBomb);
-    blocMineCell.neighbor.add(neighborWithoutBomb);
-    blocMineCell.neighbor.add(neighborWithBomb);
-    blocMineCell.neighbor.add(neighborWithoutBomb);
-    // @todo it's better if we don't have to wait, event 1 microsecond;
-    await Future.delayed(Duration(microseconds: 1));
-    blocMineCell.interact.add(MineCellInteraction.reveal);
-    blocMineCell.interact.close();
-    expect(
-      blocMineCell.cellPresentation,
-      emitsInOrder([
-        MineCellPresentation.unrevealed,
-        MineCellPresentation.n2,
-        emitsDone,
-      ]),
-    );
-  });
-  test('blockMineCell add dynamic bomb neighbor', () async {
-    final neighborWithBomb = BlocMineCell()..isBombSubject.add(true);
-    final neighborWithBombAddedLater = BlocMineCell()..isBombSubject.add(false);
-    blocMineCell.neighbor.add(neighborWithBomb);
-    blocMineCell.neighbor.add(neighborWithBombAddedLater);
-    blocMineCell.neighbor.add(neighborWithBomb);
-    blocMineCell.neighbor.add(neighborWithBombAddedLater);
-    neighborWithBombAddedLater.isBombSubject.add(true);
+  group('blockMineCell with neighbor', () {
+    BlocMineCell neighborWithBombAddedLater;
+    setUp(() async {
+      final neighborWithBomb = BlocMineCell()..isBombSubject.add(true);
+      neighborWithBombAddedLater = BlocMineCell()..isBombSubject.add(false);
+      blocMineCell.neighbor.add(neighborWithBomb);
+      blocMineCell.neighbor.add(neighborWithBombAddedLater);
+      blocMineCell.neighbor.add(neighborWithBomb);
+      blocMineCell.neighbor.add(neighborWithBombAddedLater);
+    });
+    test('bomb added before neighbor', () async {
+      // @todo it's better if we don't have to wait, even 0 microsecond;
+      await Future.delayed(Duration.zero);
+      blocMineCell.interact.add(MineCellInteraction.reveal);
+      blocMineCell.interact.close();
+      expect(
+        blocMineCell.cellPresentation,
+        emitsInOrder([
+          MineCellPresentation.unrevealed,
+          MineCellPresentation.n2,
+          emitsDone,
+        ]),
+      );
+    });
 
-    // @todo it's better if we don't have to wait, event 1 microsecond;
-    await Future.delayed(Duration(microseconds: 1));
-    blocMineCell.interact.add(MineCellInteraction.reveal);
-    blocMineCell.interact.close();
-    expect(
-      blocMineCell.cellPresentation,
-      emitsInOrder([
-        MineCellPresentation.unrevealed,
-        MineCellPresentation.n4,
-        emitsDone,
-      ]),
-    );
+    test('bomb added after neighbor', () async {
+      neighborWithBombAddedLater.isBombSubject.add(true);
+      // @todo it's better if we don't have to wait, even 0 microsecond;
+      await Future.delayed(Duration.zero);
+      blocMineCell.interact.add(MineCellInteraction.reveal);
+      blocMineCell.interact.close();
+      expect(
+        blocMineCell.cellPresentation,
+        emitsInOrder([
+          MineCellPresentation.unrevealed,
+          MineCellPresentation.n4,
+          emitsDone,
+        ]),
+      );
+    });
   });
 
   test('blockMineCell next flag flagged', () async {
@@ -131,6 +130,25 @@ void main() {
       blocMineCell.cellPresentation,
       emitsInOrder([
         MineCellPresentation.uncertain,
+        emitsDone,
+      ]),
+    );
+  });
+  test('blockMineCell resetPresentation', () async {
+    blocMineCell = BlocMineCell();
+    (blocMineCell as BlocMineCell)
+        .resetPresentation
+        .add(MineCellPresentation.uncertain);
+    (blocMineCell as BlocMineCell)
+        .resetPresentation
+        .add(MineCellPresentation.n3);
+    blocMineCell.interact.close();
+    expect(
+      blocMineCell.cellPresentation,
+      emitsInOrder([
+        MineCellPresentation.unrevealed,
+        MineCellPresentation.uncertain,
+        MineCellPresentation.n3,
         emitsDone,
       ]),
     );

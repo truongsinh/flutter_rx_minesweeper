@@ -39,11 +39,9 @@ class BlocMineCell implements IBlocMineCell {
 
   final isBombSubject = BehaviorSubject<bool>.seeded(false);
   get isBomb => isBombSubject.stream;
-  final isCovered = BehaviorSubject<bool>.seeded(true);
-  final state = BehaviorSubject<MineCellPresentation>.seeded(
-      MineCellPresentation.unrevealed);
   final BehaviorSubject<MineCellPresentation> cellPresentationBahaviour;
   get cellPresentation => cellPresentationBahaviour.distinct();
+  final resetPresentation = BehaviorSubject<MineCellPresentation>();
 
   BlocMineCell({initCellPresentation: MineCellPresentation.unrevealed})
       : cellPresentationBahaviour =
@@ -63,7 +61,6 @@ class BlocMineCell implements IBlocMineCell {
         .withLatestFrom3<int, MineCellPresentation, bool, MineCellPresentation>(
             neighborBombStream, cellPresentation, isBomb,
             (thisInteraction, latestNeighborBomb, latestPresentation, isBomb) {
-          // return MineCellPresentation.flagged;
           switch (thisInteraction) {
             case MineCellInteraction.nextFlag:
               switch (latestPresentation) {
@@ -116,16 +113,18 @@ class BlocMineCell implements IBlocMineCell {
           return latestPresentation;
         })
         .distinct()
+        .mergeWith([resetPresentation])
         .pipe(cellPresentationBahaviour);
+
+    interactSubject.listen(null, onDone: resetPresentation.close);
   }
 
   @override
   void dispose() async {
     isBombSubject.close();
-    isCovered.close();
-    state.close();
     neighborSubject.close();
     interactSubject.close();
     cellPresentationBahaviour.close();
+    resetPresentation.close();
   }
 }
